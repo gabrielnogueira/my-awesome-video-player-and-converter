@@ -160,13 +160,13 @@ Change the content of module.exports function to:
   server.use(router);
 ```
 
-Nex, to run backend and frontend in parallel, install:
+Next, to run backend and frontend in parallel:
 
 ```bash
   $ yarn add concurrently
 ```
 
-Now, include some scripts. Edit package.json, and change the "scripts" to:
+Edit package.json, and change the "scripts" to:
 
 ```bash
   "scripts": {
@@ -181,9 +181,9 @@ Now, include some scripts. Edit package.json, and change the "scripts" to:
 
 Explaining the key scripts:
 
-  * prestart: make sure we have a client folder to serve as static.
-  * start-dev: runs both our back-end and frontend dev servers at the same time
-  * postinstall: run the install script on frontend after install the backend
+  * **prestart**: make sure we have a client folder to serve as static.
+  * **start-dev**: runs both our back-end and frontend dev servers at the same time
+  * **postinstall**: run the install script on frontend after install the backend
 
 And now the backend is set!
 
