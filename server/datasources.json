@@ -1,10 +1,4 @@
 {
-  "storage": {
-    "name": "storage",
-    "connector": "loopback-component-storage",
-    "provider": "filesystem",
-    "root": "./temp_files"
-  },
   "db": {
     "name": "db",
     "connector": "memory"
