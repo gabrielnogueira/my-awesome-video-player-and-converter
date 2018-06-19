@@ -4,6 +4,61 @@ const fs = require('fs');
 const progress = require('progress-stream');
 const constants = require('../../common/constants')
 
+const keyFilename = "./firebase-api-key-file.json";
+const projectId = "mavpac-48492"
+const bucketName = `${projectId}.appspot.com`;
+
+const Zencoder = require('zencoder');
+
+const zencoderClient = Zencoder('06616ad8a761507af6657a0d604f2964');
+
+const gcs = require('@google-cloud/storage')({
+  projectId,
+  keyFilename
+});
+
+const bucket = gcs.bucket(bucketName);
+
+const uploadFile = (filePath, uploadPath) => {
+  return bucket.upload(filePath, {
+    destination: uploadPath,
+    public: true
+  });
+}
+
+const downloadFile = (url, dest, callback) => {
+  var http = require("https");
+
+  // var options = {
+  //   "method": "GET",
+  //   "hostname": "zencoder-temp-storage-us-east-1.s3.amazonaws.com",
+  //   "path": "/o/20180619/78d5357d8d56f1bbc0832f497dd0e08b/779cd4047e8bd63135bfbf0f9dd2e8b0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAI456JQ76GBU7FECA%2F20180619%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20180619T052914Z&X-Amz-Expires=81056&X-Amz-SignedHeaders=host&X-Amz-Signature=577ad856b305d6c9b5f50cfc26cd251141cb9dfbc61d18dea8a210869e859d05",
+  // };
+
+  // var options = {
+  //   "method": "GET",
+  //   "hostname": url.split('/o/')[0].replace('https://', ''),
+  //   "path": url.split('amazonaws.com')[1],
+  // };
+  
+  console.log(options);
+
+  var req = http.request(options, function (res) {
+    res.pipe(fs.createWriteStream(dest));
+
+    res.on("end", function () {
+      callback();
+    });
+
+  });
+
+  req.end();
+};
+
+const createPublicFileURL = (storageName) => {
+  return `http://storage.googleapis.com/${bucketName}/${encodeURIComponent(storageName)}`;
+}
+
 module.exports = Video => {
 
   Video.listAll = callback => {
@@ -106,59 +161,48 @@ module.exports = Video => {
 
   Video.new = (req, res, callback) => {
     const {
-      PersistentVideo,
-      VideoFile
+      PersistentVideo
     } = Video.app.models;
     const file = req.files.content || req.files.file
 
-    fs.stat(file.path, function (err, stats) {
-      PersistentVideo.create({
-          name: file.name,
-          status: constants.VIDEO_STATUS_ENVIANDO
-        })
-        .then(createVideo => {
+    PersistentVideo.create({
+      name: file.name,
+      status: constants.VIDEO_STATUS_ENVIANDO
+    }).then(createVideo => {
+      uploadFile(file.path, `originals/id${createVideo.id}-${file.name}`).then(result => {
+        createVideo.patchAttributes({
+          status: constants.VIDEO_STATUS_ENCODANDO,
+          url: createPublicFileURL(`originals/id${createVideo.id}-${file.name}`)
+        }).then(result => {
+          zencoderClient.Job.create({
+              input: result.url,
+              test: true
+            })
+            .then(({
+              data
+            }) => {
 
-          const {
-            socket
-          } = Video.app;
-
-          var writer = VideoFile.uploadStream('originals', `id${createVideo.id}-${file.name}`);
-
-          var prog = progress({
-            length: stats.size,
-            time: 1000
-          });
-
-          prog.on('progress', function (progress) {
-            socket.emit(constants.VIDEO_UPLOAD_PROGRESS, {
-              id: createVideo.id,
-              progress: progress.percentage
-            });
-          });
-
-          writer.on('error', function (err) {
-            console.log(err);
-          })
-
-          writer.on('finish', function (result) {
-            createVideo.patchAttributes({
-                status: constants.VIDEO_STATUS_ENCODANDO
+              //TEM QUE VERIFICAR SE JA ACABOU DE ENCODAR, QUANDO TIVER ACABADO CONTINUAR  
+              downloadFile(data.outputs[0].url, `temp/id${result.id}-${file.name.split('.')[0]}.mp4`, (err) => {
+                if (err) {
+                  console.log(err);
+                  return;
+                }
+                uploadFile(`temp/id${result.id}-${file.name.split('.')[0]}.mp4`, `converted/id${result.id}-${file.name.split('.')[0]}.mp4`).then(ret => {
+                  result.patchAttributes({
+                    status: constants.VIDEO_STATUS_FINALIZADO,
+                    url: createPublicFileURL(`converted/id${result.id}-${file.name.split('.')[0]}.mp4`)
+                  }).then(resultPatched => {
+                    fs.unlink(`temp/id${result.id}-${file.name.split('.')[0]}.mp4`);
+                  })
+                })
               })
-              .then(result => {
-                //call encoding service
-              });
-
-          });
-
-          fs.createReadStream(file.path)
-            .pipe(prog)
-            .pipe(writer);
-
+            })
+            .catch(err => console.log(err));
         });
-    });
-
+      }).catch(console.log);
+    })
     callback(null, "Iniciou o Upload.");
-
   };
   Video.remoteMethod('new', {
     description: "Include new video",
