@@ -15,6 +15,10 @@
       "type": "string",
       "required": true,
       "default": "ENVIANDO"
+    }, 
+    "url":{
+      "type": "string",
+      "required": false
     }
   },
   "validations": [],
