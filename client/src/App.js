@@ -72,7 +72,7 @@ class App extends Component {
         </header>
        <div className="App-intro">
           <ul>
-            {videos && videos.map((video, idx) => <li key={idx}><b>Nome: {video.name}</b> - Status: {video.status} {video.progress && `|${video.progress}%`}</li>)}
+            {videos && videos.map((video, idx) => <li key={idx}><b>Nome: {video.name}</b> - Status: {video.status} {video.progress && ` | ${video.progress}%`} {video.url && ` | ${video.url}`}</li>)}
           </ul>
         </div>
 
