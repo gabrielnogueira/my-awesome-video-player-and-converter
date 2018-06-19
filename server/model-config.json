@@ -17,10 +17,6 @@
     "dataSource": null,
     "public": true
   },
-  "VideoFile": {
-    "dataSource": "storage",
-    "public": false
-  },
   "PersistentVideo": {
     "dataSource": "db",
     "public": false
