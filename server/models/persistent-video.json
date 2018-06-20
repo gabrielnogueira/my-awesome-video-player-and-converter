@@ -15,8 +15,12 @@
       "type": "string",
       "required": true,
       "default": "ENVIANDO"
-    }, 
-    "url":{
+    },
+    "urlOriginalVideo": {
+      "type": "string",
+      "required": false
+    },
+    "urlConvertedVideo": {
       "type": "string",
       "required": false
     }

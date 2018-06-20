@@ -1,47 +1,43 @@
 'use strict';
+//requires
 const path = require('path');
 const fs = require('fs');
-const progress = require('progress-stream');
 const constants = require('../../common/constants')
+const Zencoder = require('zencoder');
 
 const keyFilename = "./firebase-api-key-file.json";
 const projectId = "mavpac-48492"
 const bucketName = `${projectId}.appspot.com`;
 
-const Zencoder = require('zencoder');
-
+//inits
 const zencoderClient = Zencoder('06616ad8a761507af6657a0d604f2964');
-
 const gcs = require('@google-cloud/storage')({
   projectId,
   keyFilename
 });
-
 const bucket = gcs.bucket(bucketName);
 
-const uploadFile = (filePath, uploadPath) => {
-  return bucket.upload(filePath, {
-    destination: uploadPath,
-    public: true
-  });
-}
+//functions
+const uploadVideoFile = (filePath, fileName, folderName, extension, video) => {
 
+  return new Promise((resolve, reject) => {
+    const uploadPath = `${folderName}/id${video.id}-${!extension ? fileName : fileName.split('.')[0]}${extension}`;
+    bucket.upload(filePath, {
+      destination: uploadPath,
+      public: true
+    }).then(uploadVideoResult => {
+      resolve({video, uploadPath})
+    }).catch(reject);
+  })
+}
 const downloadFile = (url, dest, callback) => {
   var http = require("https");
 
-  // var options = {
-  //   "method": "GET",
-  //   "hostname": "zencoder-temp-storage-us-east-1.s3.amazonaws.com",
-  //   "path": "/o/20180619/78d5357d8d56f1bbc0832f497dd0e08b/779cd4047e8bd63135bfbf0f9dd2e8b0.mp4?X-Amz-Algorithm=AWS4-HMAC-SHA256&X-Amz-Credential=AKIAI456JQ76GBU7FECA%2F20180619%2Fus-east-1%2Fs3%2Faws4_request&X-Amz-Date=20180619T052914Z&X-Amz-Expires=81056&X-Amz-SignedHeaders=host&X-Amz-Signature=577ad856b305d6c9b5f50cfc26cd251141cb9dfbc61d18dea8a210869e859d05",
-  // };
-
-  // var options = {
-  //   "method": "GET",
-  //   "hostname": url.split('/o/')[0].replace('https://', ''),
-  //   "path": url.split('amazonaws.com')[1],
-  // };
-  
-  console.log(options);
+  var options = {
+    "method": "GET",
+    "hostname": url.split('/o/')[0].replace('https://', ''),
+    "path": url.split('amazonaws.com')[1],
+  };
 
   var req = http.request(options, function (res) {
     res.pipe(fs.createWriteStream(dest));
@@ -49,14 +45,46 @@ const downloadFile = (url, dest, callback) => {
     res.on("end", function () {
       callback();
     });
-
   });
 
   req.end();
 };
-
-const createPublicFileURL = (storageName) => {
+const createPublicFileURL = storageName => {
   return `http://storage.googleapis.com/${bucketName}/${encodeURIComponent(storageName)}`;
+}
+const createConversionJob = video => {
+  return new Promise((resolve, reject) => {
+    zencoderClient.Job.create({
+      input: video.urlOriginalVideo,
+      test: true
+    }, (err, result) => {
+      if (err) {
+        reject(err);
+        return;
+      }
+      resolve({video, id:result.outputs[0].id})
+    })
+  })
+}
+
+const verifyEnconding = result => {
+  return new Promise((resolve, reject) => {
+    executeVerify(result.id, resultSuccess => resolve({video:result.video, jobOutputResult:resultSuccess}), reject)
+  })
+}
+
+const executeVerify = (id, onSuccess, onError) => {
+  zencoderClient.Output.details(id, (err, result) => {
+    if (err) {
+      onError(err);
+      return;
+    }
+    if (result.state !== 'finished') {
+      setTimeout(() => executeVerify(id, onSuccess, onError), 2000);
+      return;
+    }
+    onSuccess(result);
+  });
 }
 
 module.exports = Video => {
@@ -79,9 +107,13 @@ module.exports = Video => {
       arg: 'result',
       type: 'object',
       default: [{
+        id: 1,
         name: 'Video 1',
-        status: 'FINALIZADO'
+        status: 'FINALIZADO',
+        urlOriginalVideo: 'https://storagename/originals/video1.wmv',
+        urlConvertedVideo: 'https://storagename/converted/video1.mp4'
       }, {
+        id: 2,
         name: 'Video 2',
         status: 'ENVIANDO'
       }]
@@ -109,18 +141,22 @@ module.exports = Video => {
     });
     next();
   });
-  Video.listAllChangeStream = (callback) => {
+  Video.listAllChangeStream = callback => {
     Video.listAll(callback);
   };
   Video.remoteMethod('listAllChangeStream', {
-    description: "List all videos with change stream",
+    description: "List all videos and open socket to listen modifications on list",
     returns: [{
       arg: 'result',
       type: 'object',
       default: [{
+        id: 1,
         name: 'Video 1',
-        status: 'FINALIZADO'
+        status: 'FINALIZADO',
+        urlOriginalVideo: 'https://storagename/originals/video1.wmv',
+        urlConvertedVideo: 'https://storagename/converted/video1.mp4'
       }, {
+        id: 2,
         name: 'Video 2',
         status: 'ENVIANDO'
       }]
@@ -151,7 +187,14 @@ module.exports = Video => {
     }],
     returns: {
       arg: 'result',
-      type: 'object'
+      type: 'object',
+      default: {
+        id: 1,
+        name: 'Video 1',
+        status: 'FINALIZADO',
+        urlOriginalVideo: 'https://storagename/originals/video1.wmv',
+        urlConvertedVideo: 'https://storagename/converted/video1.mp4'
+      }
     },
     http: {
       path: '/:id',
@@ -163,47 +206,36 @@ module.exports = Video => {
     const {
       PersistentVideo
     } = Video.app.models;
-    const file = req.files.content || req.files.file
+    const file = req.files.content || req.files.file;
 
     PersistentVideo.create({
-      name: file.name,
-      status: constants.VIDEO_STATUS_ENVIANDO
-    }).then(createVideo => {
-      uploadFile(file.path, `originals/id${createVideo.id}-${file.name}`).then(result => {
-        createVideo.patchAttributes({
+        name: file.name      
+      })
+      .then(video => {
+        callback(null, "Iniciou o Upload.");
+        return uploadVideoFile(file.path, file.name, 'originals', null, video);
+      })
+      .then(result => {
+        const {video, uploadPath} = result;
+        return video.patchAttributes({
           status: constants.VIDEO_STATUS_ENCODANDO,
-          url: createPublicFileURL(`originals/id${createVideo.id}-${file.name}`)
-        }).then(result => {
-          zencoderClient.Job.create({
-              input: result.url,
-              test: true
-            })
-            .then(({
-              data
-            }) => {
-
-              //TEM QUE VERIFICAR SE JA ACABOU DE ENCODAR, QUANDO TIVER ACABADO CONTINUAR  
-              downloadFile(data.outputs[0].url, `temp/id${result.id}-${file.name.split('.')[0]}.mp4`, (err) => {
-                if (err) {
-                  console.log(err);
-                  return;
-                }
-                uploadFile(`temp/id${result.id}-${file.name.split('.')[0]}.mp4`, `converted/id${result.id}-${file.name.split('.')[0]}.mp4`).then(ret => {
-                  result.patchAttributes({
-                    status: constants.VIDEO_STATUS_FINALIZADO,
-                    url: createPublicFileURL(`converted/id${result.id}-${file.name.split('.')[0]}.mp4`)
-                  }).then(resultPatched => {
-                    fs.unlink(`temp/id${result.id}-${file.name.split('.')[0]}.mp4`);
-                  })
-                })
-              })
-            })
-            .catch(err => console.log(err));
+          urlOriginalVideo: createPublicFileURL(uploadPath)
+        });
+      })
+      .then(createConversionJob)
+      .then(verifyEnconding)
+      .then(result => {
+        const {video, jobOutputResult} = result;
+        return uploadVideoFile(jobOutputResult.url, file.name, 'converted', '.mp4', video)
+      })
+      .then(result => {
+        const {video, uploadPath} = result;
+        return video.patchAttributes({
+          status: constants.VIDEO_STATUS_FINALIZADO,
+          urlConvertedVideo: createPublicFileURL(uploadPath)
         });
       }).catch(console.log);
-    })
-    callback(null, "Iniciou o Upload.");
-  };
+  }
   Video.remoteMethod('new', {
     description: "Include new video",
     accepts: [{

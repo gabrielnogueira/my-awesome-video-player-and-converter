@@ -1,4 +1,9 @@
 {
   "name": "Video",
-  "base": "Model"
+  "base": "Model",
+  "properties": {},
+  "validations": [],
+  "relations": {},
+  "acls": [],
+  "methods": {}
 }
