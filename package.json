@@ -7,7 +7,7 @@
   },
   "scripts": {
     "lint": "eslint .",
-    "prestart": "npm run --prefix client build",
+    "_prestart": "npm run --prefix client build",
     "start": "node .",
     "start-dev": "concurrently \"nodemon .\" \"npm start --prefix client\"",
     "postinstall": "yarn --cwd client install",
