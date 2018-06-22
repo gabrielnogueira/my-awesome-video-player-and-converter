@@ -9,6 +9,7 @@ import './lib/animate/animate.min.css';
 
 import './App.css';
 
+// const socket = openSocket(window.location.href);
 const socket = openSocket(window.location.href);
 
 class App extends Component {
