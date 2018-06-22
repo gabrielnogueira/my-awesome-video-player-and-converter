@@ -27,7 +27,7 @@ const uploadVideoFile = (filePath, fileName, folderName, extension, video) => {
       public: true
     }).then(uploadVideoResult => {
       resolve({video, uploadPath})
-    }).catch(reject);
+    }).catch(err=>reject({video, err}));
   })
 }
 const downloadFile = (url, dest, callback) => {
@@ -59,7 +59,7 @@ const createConversionJob = video => {
       test: true
     }, (err, result) => {
       if (err) {
-        reject(err);
+        reject({video, err})        
         return;
       }
       resolve({video, id:result.outputs[0].id})
@@ -69,7 +69,7 @@ const createConversionJob = video => {
 
 const verifyEnconding = result => {
   return new Promise((resolve, reject) => {
-    executeVerify(result.id, resultSuccess => resolve({video:result.video, jobOutputResult:resultSuccess}), reject)
+    executeVerify(result.id, resultSuccess => resolve({video:result.video, jobOutputResult:resultSuccess}), resultError => reject({video:result.video, err:resultError}) )
   })
 }
 
@@ -212,7 +212,7 @@ module.exports = Video => {
         name: file.name      
       })
       .then(video => {
-        callback(null, "Iniciou o Upload.");
+        callback(null, {message:"Iniciando o processo de upload!", title:"Aguarde!"});
         return uploadVideoFile(file.path, file.name, 'originals', null, video);
       })
       .then(result => {
@@ -234,7 +234,19 @@ module.exports = Video => {
           status: constants.VIDEO_STATUS_FINALIZADO,
           urlConvertedVideo: createPublicFileURL(uploadPath)
         });
-      }).catch(console.log);
+      }).catch(result=>{
+        console.log(result.err);
+        const {
+          socket
+        } = Video.app;
+
+        result.video.patchAttributes({
+          status: constants.VIDEO_STATUS_ERRO,
+          urlConvertedVideo: null
+        }).then(videoResult=>{
+          socket.emit(constants.VIDEO_ERRO_MESSAGE, {message:'Algo inesperado aconteceu ao tentar converter o vídeo: ' + result.video.name, title:'Erro no processo de conversão'});
+        })
+      });
   }
   Video.remoteMethod('new', {
     description: "Include new video",
