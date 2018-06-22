@@ -7560,7 +7560,7 @@ verror@1.10.0:
     core-util-is "1.0.2"
     extsprintf "^1.2.0"
 
-"video.js@^5.19.2 || ^6.2.8", "video.js@^6.8.0 || ^7.0.0", video.js@^7.0.3:
+"video.js@^5.19.2 || ^6.2.8", "video.js@^6.8.0 || ^7.0.0":
   version "6.10.3"
   resolved "https://registry.yarnpkg.com/video.js/-/video.js-6.10.3.tgz#c0a2601866c240cebffacc0e966c08f7d6933edc"
   dependencies:
@@ -7571,6 +7571,19 @@ verror@1.10.0:
     videojs-font "2.1.0"
     videojs-ie8 "1.1.2"
     videojs-vtt.js "0.12.6"
+    xhr "2.4.0"
+
+video.js@^7.0.3:
+  version "7.0.5"
+  resolved "https://registry.yarnpkg.com/video.js/-/video.js-7.0.5.tgz#d4eda7963e869799e6afd26e225523d3781b49b8"
+  dependencies:
+    "@videojs/http-streaming" "^1.0.2"
+    babel-runtime "^6.9.2"
+    global "4.3.2"
+    safe-json-parse "4.0.0"
+    tsml "1.0.1"
+    videojs-font "3.0.0"
+    videojs-vtt.js "0.14.1"
     xhr "2.4.0"
 
 videojs-font@2.1.0:
