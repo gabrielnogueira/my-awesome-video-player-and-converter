@@ -9,7 +9,7 @@ import './lib/animate/animate.min.css';
 
 import './App.css';
 
-const socket = openSocket('http://localhost:3000');
+const socket = openSocket(window.location.href);
 
 class App extends Component {
   constructor(props) {
@@ -23,7 +23,7 @@ class App extends Component {
     const idVideo = this.props.match ? this.props.match.params.id : null;
 
     if(idVideo){
-      fetch(`http://localhost:3000/api/Videos/${idVideo}`)
+      fetch(`api/Videos/${idVideo}`)
       .then(response => {
         return response.json();
       })
@@ -42,7 +42,7 @@ class App extends Component {
       return
     }
 
-    fetch('http://localhost:3000/api/Videos/realtime-change')
+    fetch('api/Videos/realtime-change')
     .then(response => {
       return response.json();
     })
@@ -97,7 +97,7 @@ class App extends Component {
     const data = new FormData();
     data.append('file', event.target.files[0]);
     const that = this;
-     fetch('http://localhost:3000/api/Videos', {
+     fetch('api/Videos', {
       method: 'post', 
       body: data
     }).then(response => response.json())
