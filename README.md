@@ -31,18 +31,21 @@ I choose:
 ## TODO list
 ### Backend
 - [x] Create the server project;
-- [ ] Create the Rest services;
-- [ ] Create upload process;
-- [ ] Create storage process;
-- [ ] Create conversion process;
+- [x] Create the Rest services;
+- [x] Create upload process;
+- [x] Create storage process;
+- [x] Create conversion process;
 - [ ] Create the Automated Tests;
 
 ### Frontend
 - [x] Create the client project;
-- [ ] Create the Responsive UI;
-- [ ] Create the Routing;
-- [ ] Integrate with Backend;
+- [x] Create the Responsive UI;
+- [x] Create the Routing;
+- [x] Integrate with Backend;
 - [ ] Create the Automated Tests;
+
+### Other Tasks
+- [ ] Create a zero to final guide of this project;
 
 ## Getting Started with this project
   Just clone this repo, install global dependencies if you don't have them and then start the server:
