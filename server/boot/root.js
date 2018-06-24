@@ -7,7 +7,7 @@ module.exports = function (server) {
   // Install a `/status` route that returns server status
   router.get('/status', server.loopback.status());
 
-  app.get('*', function(req, res){
+  router.get('*', function (req, res) {
     var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
     res.sendFile(indexFile);
   });
