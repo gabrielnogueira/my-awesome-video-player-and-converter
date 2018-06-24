@@ -17,16 +17,16 @@ videojs.registerPlugin('playlistui', videojsPlaylistUiPlugin);
 export default class Player extends Component {
     componentDidMount() {
         this.player = videojs(this.videoNode, this.props, function onPlayerReady() {
-            // console.log('Ready!')
+            console.log('Player Ready!')
         });
-        this.setaPlaylist(this.props.playlist, this.props.idVideo);
+        this.setPlaylist(this.props.playlist, this.props.idVideo);
     }
 
     componentWillReceiveProps(nextProps){
-      this.setaPlaylist(nextProps.playlist, nextProps.idVideo);
+      this.setPlaylist(nextProps.playlist, nextProps.idVideo);
     }
 
-    setaPlaylist(pl, id){
+    setPlaylist(pl, id){
       let idxPlay = null; 
       if(this.player && pl){
         const playlist = pl.map((video, idx)=>{
@@ -44,7 +44,7 @@ export default class Player extends Component {
             idxPlay = idx;
           }
           const retorno = {
-            name: video.name,
+            name: `${video.name} | id: ${video.id}`,
             status: video.status,
             barclass: barClass,
           }
