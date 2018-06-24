@@ -12,10 +12,12 @@ module.exports = function (server) {
     res.sendFile(indexFile);
   });
 
-  server.use(function(err, req, res, next){
+  server.use(router);
+
+  // Handle 404
+  server.use(function(req, res) {
     var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
     res.sendFile(indexFile);
   });
 
-  server.use(router);
 };
