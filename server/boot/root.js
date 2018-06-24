@@ -16,8 +16,13 @@ module.exports = function (server) {
 
   // Handle 404
   server.use(function(req, res) {
-    var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
-    res.sendFile(indexFile);
+
+    if(req.accepts('html')) {
+      var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
+      res.sendFile(indexFile);
+      return;
+    };
+
   });
 
 };
