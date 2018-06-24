@@ -42,7 +42,11 @@
       ]
     }
   },
-  "files": {},
+  "files": {
+    "loopback#static": {
+      "params": "$!../client/build/index.html" 
+    }
+  },
   "final": {
     "loopback#urlNotFound": {}
   },
