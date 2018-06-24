@@ -12,5 +12,10 @@ module.exports = function (server) {
     res.sendFile(indexFile);
   });
 
+  server.use(function(err, req, res, next){
+    var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
+    res.sendFile(indexFile);
+  });
+
   server.use(router);
 };
