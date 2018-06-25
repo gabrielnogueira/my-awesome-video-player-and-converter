@@ -7,22 +7,22 @@ module.exports = function (server) {
   // Install a `/status` route that returns server status
   router.get('/status', server.loopback.status());
 
+  var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
+
   router.get('/', function (req, res) {
-    var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
     res.sendFile(indexFile);
   });
 
-  server.use(router);
-
-  // Handle 404
-  server.use(function(req, res) {
-
-    if(req.accepts('html')) {
-      var indexFile = path.resolve(__dirname, '../..', server.get('indexFile'));
-      res.sendFile(indexFile);
-      return;
-    };
-
+  router.get('/videos', function (req, res) {
+    res.sendFile(indexFile);
   });
+
+  router.get('/videos/:id', function (req, res) {
+    res.sendFile(indexFile);
+  });
+
+
+
+  server.use(router);
 
 };
