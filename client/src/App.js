@@ -159,7 +159,7 @@ class App extends Component {
               ref={ref => this.toastr = ref}
               className="toast-top-right"
             />
-        {this.state.loading && <div className="absolute-wrapper" style={{width:'100%', height:document.getElementById('root').clientHeight, zIndex:'99999', background: 'rgba(0,0,0,.4)'}} >
+        {this.state.loading && <div className="absolute-wrapper" style={{width:'100%', height:'100%', zIndex:'99999', background: 'rgba(0,0,0,.4)'}} >
           <div className="flex-center">
               <ReactLoading type="bubbles" color="white" height={105} width={100} />
             </div>
