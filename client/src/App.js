@@ -12,7 +12,9 @@ import './lib/animate/animate.min.css';
 import './App.css';
 import './input.css';
 
-const socket = openSocket(window.location.href);
+const socket = openSocket(window.location.origin);
+// const socket = openSocket("http://localhost:3000");
+
 
 class App extends Component {
   constructor(props) {
@@ -89,18 +91,23 @@ class App extends Component {
   }
 
   videosListener(callback){
+    console.log('videos listener')
     socket.on(constants.VIDEO_LIST_CHANGED, function (videos) {
       callback(videos)
     });
   }
 
   uploadListener(callback){
+    console.log('upload listener')
+    
     socket.on(constants.VIDEO_UPLOAD_PROGRESS, function (videos) {
       callback(videos)
     });
-  }
+  } 
 
   errorListener(callback){
+    console.log('Erros listener')
+    
     socket.on(constants.VIDEO_ERRO_MESSAGE, function(message){
       callback(message);
     })

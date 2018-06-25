@@ -35,6 +35,7 @@ boot(app, __dirname, function (err) {
   if (require.main === module) {
 
     app.socket = socket(app.start());
+    console.log('Socket iniciado');
     app.socket.on('connection', function (socket) {
       console.log('a user connected');
       socket.on('disconnect', function () {
